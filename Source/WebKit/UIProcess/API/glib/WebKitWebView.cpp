@@ -165,7 +165,9 @@ enum {
     RUN_FILE_CHOOSER,
 
     CONTEXT_MENU,
+#if PLATFORM(GTK)
     CONTEXT_MENU_DISMISSED,
+#endif
 
     SUBMIT_FORM,
 
@@ -2250,6 +2252,7 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
 
     signals[CONTEXT_MENU] = createContextMenuSignal(webViewClass);
 
+#if PLATFORM(GTK)
     /**
      * WebKitWebView::context-menu-dismissed:
      * @web_view: the #WebKitWebView on which the signal is emitted
@@ -2265,6 +2268,7 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
                      0, 0,
                      g_cclosure_marshal_VOID__VOID,
                      G_TYPE_NONE, 0);
+#endif // PLATFORM(GTK)
 
     /**
      * WebKitWebView::submit-form:

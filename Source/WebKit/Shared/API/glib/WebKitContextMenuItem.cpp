@@ -334,6 +334,28 @@ GAction* webkit_context_menu_item_get_gaction(WebKitContextMenuItem* item)
 }
 
 /**
+ * webkit_context_menu_item_get_title:
+ * @item: a #WebKitContextMenuItem
+ *
+ * Gets the title associated to @item.
+ *
+ * Returns: (transfer none): the title associated to the #WebKitContextMenuItem,
+ *    or %NULL if @item is a separator.
+ *
+ * Since: 2.18
+ */
+const char* webkit_context_menu_item_get_title(WebKitContextMenuItem* item)
+{
+    g_return_val_if_fail(WEBKIT_IS_CONTEXT_MENU_ITEM(item), nullptr);
+
+#if ENABLE(CONTEXT_MENUS)
+    return item->priv->menuItem->title().utf8().data();
+#else
+    g_assert_not_reached();
+#endif // ENABLE(CONTEXT_MENUS)
+}
+
+/**
  * webkit_context_menu_item_get_stock_action:
  * @item: a #WebKitContextMenuItem
  *
