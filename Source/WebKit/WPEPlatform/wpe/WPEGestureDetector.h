@@ -51,12 +51,15 @@ private:
     //        properties, such as screen size and pixel density.
     static constexpr uint32_t dragActivationThresholdPx { 8 };
 
+    static constexpr guint32 tapThresholdMs { 1000 };
+
     WPEGesture m_gesture { WPE_GESTURE_NONE };
     std::optional<uint32_t> m_sequenceId;
     std::optional<Position> m_position;
     std::optional<Position> m_nextDeltaReferencePosition;
     std::optional<Delta> m_delta;
     std::optional<bool> m_dragBegin;
+    std::optional<guint32> m_touchStart;
 };
 
 } // namespace WPE

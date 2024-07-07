@@ -40,12 +40,14 @@ G_BEGIN_DECLS
  * @WPE_GESTURE_NONE: no gesture.
  * @WPE_GESTURE_TAP: tap gesture that has a corresponding position.
  * @WPE_GESTURE_DRAG: drag gesture that has a corresponding position and delta.
+ * @WPE_GESTURE_LONG_PRESS: long press that has a corresponding position.
  */
 typedef enum {
     WPE_GESTURE_NONE,
 
     WPE_GESTURE_TAP,
     WPE_GESTURE_DRAG,
+    WPE_GESTURE_LONG_PRESS,
 } WPEGesture;
 
 typedef struct _WPEEvent WPEEvent;

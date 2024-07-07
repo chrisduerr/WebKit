@@ -42,6 +42,7 @@ void GestureDetector::handleEvent(WPEEvent* event)
             m_gesture = WPE_GESTURE_TAP;
             m_position = { x, y };
             m_sequenceId = wpe_event_touch_get_sequence_id(event);
+            m_touchStart = wpe_event_get_time(event);
         }
         break;
     case WPE_EVENT_TOUCH_CANCEL:
@@ -66,6 +67,8 @@ void GestureDetector::handleEvent(WPEEvent* event)
         if (double x, y; wpe_event_get_position(event, &x, &y) && m_position) {
             if (m_gesture == WPE_GESTURE_DRAG)
                 m_delta = { x - m_nextDeltaReferencePosition->x, y - m_nextDeltaReferencePosition->y };
+            else if (m_touchStart > tapThresholdMs)
+                m_gesture = WPE_GESTURE_LONG_PRESS;
         } else
             reset();
         m_sequenceId = std::nullopt; // We can accept new sequence at this point.

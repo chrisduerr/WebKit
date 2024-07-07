@@ -78,6 +78,7 @@ private:
 
     gboolean handleEvent(WPEEvent*);
     void handleGesture(WPEEvent*);
+    void simulateClick(double x, double y, WPEModifiers modifiers, guint button);
 
     GRefPtr<WPEView> m_wpeView;
     std::unique_ptr<WebKit::AcceleratedBackingStoreDMABuf> m_backingStore;
