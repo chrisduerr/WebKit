@@ -25,6 +25,7 @@
 
 #include "config.h"
 #include "WPEWebViewPlatform.h"
+#include "Logging.h"
 
 #if ENABLE(WPE_PLATFORM)
 #include "APIViewClient.h"
@@ -388,8 +389,10 @@ void ViewPlatform::handleGesture(WPEEvent* event)
 
     switch (wpe_gesture_controller_get_gesture(gestureController)) {
     case WPE_GESTURE_NONE:
+        RELEASE_LOG(XR, "NO GESTURE\n");
         break;
     case WPE_GESTURE_TAP:
+        RELEASE_LOG(XR, "TAP GESTURE\n");
         if (wpe_event_get_event_type(event) == WPE_EVENT_TOUCH_MOVE)
             return;
         if (double x, y; wpe_gesture_controller_get_gesture_position(gestureController, &x, &y)) {
@@ -397,6 +400,7 @@ void ViewPlatform::handleGesture(WPEEvent* event)
         }
         break;
     case WPE_GESTURE_DRAG:
+        RELEASE_LOG(XR, "DRAG GESTURE\n");
         if (double x, y, dx, dy; wpe_gesture_controller_get_gesture_position(gestureController, &x, &y) && wpe_gesture_controller_get_gesture_delta(gestureController, &dx, &dy)) {
             GRefPtr<WPEEvent> simulatedScrollEvent = adoptGRef(wpe_event_scroll_new(
                 m_wpeView.get(), WPE_INPUT_SOURCE_MOUSE, 0, static_cast<WPEModifiers>(0), dx, dy, TRUE, FALSE, x, y
@@ -408,6 +412,7 @@ void ViewPlatform::handleGesture(WPEEvent* event)
         }
         break;
     case WPE_GESTURE_LONG_PRESS:
+        RELEASE_LOG(XR, "LONG-PRESS GESTURE\n");
 #if ENABLE(CONTEXT_MENUS)
         if (double x, y; wpe_gesture_controller_get_gesture_position(gestureController, &x, &y)) {
             simulateClick(x, y, WPE_MODIFIER_POINTER_BUTTON2, 2);

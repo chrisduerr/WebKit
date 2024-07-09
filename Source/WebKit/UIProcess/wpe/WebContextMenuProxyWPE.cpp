@@ -24,6 +24,7 @@
  */
 
 #include "config.h"
+#include "Logging.h"
 #include "WebContextMenuProxyWPE.h"
 
 #if ENABLE(CONTEXT_MENUS)
@@ -38,6 +39,7 @@ WebContextMenuProxyWPE::WebContextMenuProxyWPE(WebPageProxy& page, ContextMenuCo
 
 void WebContextMenuProxyWPE::show()
 {
+    RELEASE_LOG(XR, "!!!SHOWING CONTEXT MENU!!!\n");
     WebContextMenuProxy::show();
 }
 
