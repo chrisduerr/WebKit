@@ -326,3 +326,24 @@ void webkit_web_view_toggle_inspector(WebKitWebView* webView)
         inspector->show();
 }
 #endif
+
+guint createContextMenuDismissedSignal(WebKitWebViewClass* webViewClass)
+{
+    /**
+     * WebKitWebView::context-menu-dismissed:
+     * @web_view: the #WebKitWebView on which the signal is emitted
+     *
+     * Emitted after #WebKitWebView::context-menu signal, if the context menu is shown,
+     * to notify that the context menu is dismissed.
+     *
+     * Deprecated: 2.48, WPE WebKit does not emit this signal.
+     */
+    return g_signal_new(
+        "context-menu-dismissed",
+        G_TYPE_FROM_CLASS(webViewClass),
+        static_cast<GSignalFlags>(G_SIGNAL_RUN_LAST | G_SIGNAL_DEPRECATED),
+        G_STRUCT_OFFSET(WebKitWebViewClass, context_menu_dismissed),
+        0, 0,
+        g_cclosure_marshal_VOID__VOID,
+        G_TYPE_NONE, 0);
+}

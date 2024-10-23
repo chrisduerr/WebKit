@@ -126,6 +126,7 @@ void webkitWebViewSetIsWebProcessResponsive(WebKitWebView*, bool);
 
 guint createShowOptionMenuSignal(WebKitWebViewClass*);
 guint createContextMenuSignal(WebKitWebViewClass*);
+guint createContextMenuDismissedSignal(WebKitWebViewClass*);
 
 #if PLATFORM(GTK) || (PLATFORM(WPE) && ENABLE(WPE_PLATFORM))
 WebKit::RendererBufferFormat webkitWebViewGetRendererBufferFormat(WebKitWebView*);

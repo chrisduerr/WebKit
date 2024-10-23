@@ -129,7 +129,9 @@ gboolean webkitWebViewRunFileChooser(WebKitWebView* webView, WebKitFileChooserRe
 struct WindowStateEvent {
     WTF_MAKE_STRUCT_FAST_ALLOCATED;
 
-    enum class Type { Maximize, Minimize, Restore };
+    enum class Type { Maximize,
+        Minimize,
+        Restore };
 
     WindowStateEvent(Type type, CompletionHandler<void()>&& completionHandler)
         : type(type)
@@ -463,4 +465,25 @@ void webkit_web_view_get_background_color(WebKitWebView* webView, GdkRGBA* rgba)
 
     auto& page = *webkitWebViewBaseGetPage(reinterpret_cast<WebKitWebViewBase*>(webView));
     *rgba = page.backgroundColor().value_or(WebCore::Color::white);
+}
+
+guint createContextMenuDismissedSignal(WebKitWebViewClass* webViewClass)
+{
+    /**
+     * WebKitWebView::context-menu-dismissed:
+     * @web_view: the #WebKitWebView on which the signal is emitted
+     *
+     * Emitted after #WebKitWebView::context-menu signal, if the context menu is shown,
+     * to notify that the context menu is dismissed.
+     *
+     * Deprecated: 2.48, WPE WebKit does not emit this signal.
+     */
+    return g_signal_new(
+        "context-menu-dismissed",
+        G_TYPE_FROM_CLASS(webViewClass),
+        static_cast<GSignalFlags>(G_SIGNAL_RUN_LAST | G_SIGNAL_DEPRECATED),
+        G_STRUCT_OFFSET(WebKitWebViewClass, context_menu_dismissed),
+        0, 0,
+        g_cclosure_marshal_VOID__VOID,
+        G_TYPE_NONE, 0);
 }

@@ -2251,21 +2251,7 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
 
     signals[CONTEXT_MENU] = createContextMenuSignal(webViewClass);
 
-    /**
-     * WebKitWebView::context-menu-dismissed:
-     * @web_view: the #WebKitWebView on which the signal is emitted
-     *
-     * Emitted after #WebKitWebView::context-menu signal, if the context menu is shown,
-     * to notify that the context menu is dismissed.
-     */
-    signals[CONTEXT_MENU_DISMISSED] =
-        g_signal_new("context-menu-dismissed",
-                     G_TYPE_FROM_CLASS(webViewClass),
-                     G_SIGNAL_RUN_LAST,
-                     G_STRUCT_OFFSET(WebKitWebViewClass, context_menu_dismissed),
-                     0, 0,
-                     g_cclosure_marshal_VOID__VOID,
-                     G_TYPE_NONE, 0);
+    signals[CONTEXT_MENU_DISMISSED] = createContextMenuDismissedSignal(webViewClass);
 
     /**
      * WebKitWebView::submit-form:
