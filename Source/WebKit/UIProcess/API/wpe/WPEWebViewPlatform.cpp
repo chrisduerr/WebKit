@@ -55,8 +55,13 @@ using namespace WebKit;
 
 namespace WKWPE {
 
+static constexpr Seconds longPressTimeoutDelay = 1000_ms;
+
 ViewPlatform::ViewPlatform(WPEDisplay* display, const API::PageConfiguration& configuration)
     : m_wpeView(adoptGRef(wpe_view_new(display)))
+#if ENABLE(CONTEXT_MENUS)
+    , m_longPressTimeout(RunLoop::main(), this, &ViewPlatform::handleLongPress)
+#endif // ENABLE(CONTEXT_MENUS
 {
     ASSERT(m_wpeView);
 
@@ -388,51 +393,96 @@ void ViewPlatform::handleGesture(WPEEvent* event)
 
     wpe_gesture_controller_handle_event(gestureController, event);
 
-    if (wpe_event_get_event_type(event) == WPE_EVENT_TOUCH_DOWN)
-        return;
+    WPEGesture gesture = wpe_gesture_controller_get_gesture(gestureController);
 
-    switch (wpe_gesture_controller_get_gesture(gestureController)) {
+    switch (wpe_event_get_event_type(event)) {
+    case WPE_EVENT_TOUCH_DOWN:
+#if ENABLE(CONTEXT_MENUS)
+        // Start synthetic right-click timer on touch down.
+        if (gesture == WPE_GESTURE_TAP
+            && wpe_gesture_controller_get_gesture_position(gestureController, &m_longPressX, &m_longPressY)) {
+            m_longPressTimeout.stop();
+            m_longPressTimeout.startOneShot(longPressTimeoutDelay);
+            m_longPressFired = false;
+        }
+#endif // ENABLE(CONTEXT_MENU)
+
+        return;
+    case WPE_EVENT_TOUCH_UP:
+#if ENABLE(CONTEXT_MENUS)
+        // Cancel synthetic right-click timer on touch release.
+        m_longPressTimeout.stop();
+
+        // Ignore touch up for long press gestures.
+        if (m_longPressFired) {
+            m_longPressFired = false;
+            return;
+        }
+#endif // ENABLE(CONTEXT_MENU)
+
+        break;
+    default:
+        break;
+    }
+
+    switch (gesture) {
     case WPE_GESTURE_NONE:
         break;
     case WPE_GESTURE_TAP:
         if (wpe_event_get_event_type(event) == WPE_EVENT_TOUCH_MOVE)
             return;
         if (double x, y; wpe_gesture_controller_get_gesture_position(gestureController, &x, &y)) {
-            // Mouse motion towards the point of the click.
-            {
-                GRefPtr<WPEEvent> simulatedEvent = adoptGRef(wpe_event_pointer_move_new(
-                    WPE_EVENT_POINTER_MOVE, m_wpeView.get(), WPE_INPUT_SOURCE_TOUCHSCREEN, 0, static_cast<WPEModifiers>(0), x, y, 0, 0
-                ));
-                page().handleMouseEvent(WebKit::NativeWebMouseEvent(simulatedEvent.get()));
-            }
-
-            // Mouse down on the point of the click.
-            {
-                GRefPtr<WPEEvent> simulatedEvent = adoptGRef(wpe_event_pointer_button_new(
-                    WPE_EVENT_POINTER_DOWN, m_wpeView.get(), WPE_INPUT_SOURCE_TOUCHSCREEN, 0, WPE_MODIFIER_POINTER_BUTTON1, 1, x, y, 1
-                ));
-                page().handleMouseEvent(WebKit::NativeWebMouseEvent(simulatedEvent.get()));
-            }
-
-            // Mouse up on the same location.
-            {
-                GRefPtr<WPEEvent> simulatedEvent = adoptGRef(wpe_event_pointer_button_new(
-                    WPE_EVENT_POINTER_UP, m_wpeView.get(), WPE_INPUT_SOURCE_TOUCHSCREEN, 0, static_cast<WPEModifiers>(0), 1, x, y, 0
-                ));
-                page().handleMouseEvent(WebKit::NativeWebMouseEvent(simulatedEvent.get()));
-            }
+            simulateClick(x, y, WPE_MODIFIER_POINTER_BUTTON1, 1);
         }
         break;
     case WPE_GESTURE_DRAG:
         if (double x, y, dx, dy; wpe_gesture_controller_get_gesture_position(gestureController, &x, &y) && wpe_gesture_controller_get_gesture_delta(gestureController, &dx, &dy)) {
+#if ENABLE(CONTEXT_MENUS)
+            // Cancel synthetic right-click timer on drag.
+            m_longPressTimeout.stop();
+#endif // ENABLE(CONTEXT_MENUS)
+
             GRefPtr<WPEEvent> simulatedScrollEvent = adoptGRef(wpe_event_scroll_new(
-                m_wpeView.get(), WPE_INPUT_SOURCE_MOUSE, 0, static_cast<WPEModifiers>(0), dx, dy, TRUE, FALSE, x, y
-            ));
+                m_wpeView.get(), WPE_INPUT_SOURCE_MOUSE, 0, static_cast<WPEModifiers>(0), dx, dy, TRUE, FALSE, x, y));
             auto phase = wpe_gesture_controller_is_drag_begin(gestureController)
                 ? WebWheelEvent::Phase::PhaseBegan
-                : (wpe_event_get_event_type(event) == WPE_EVENT_TOUCH_UP) ? WebWheelEvent::Phase::PhaseEnded : WebWheelEvent::Phase::PhaseChanged;
+                : (wpe_event_get_event_type(event) == WPE_EVENT_TOUCH_UP) ? WebWheelEvent::Phase::PhaseEnded
+                                                                          : WebWheelEvent::Phase::PhaseChanged;
             page().handleNativeWheelEvent(WebKit::NativeWebWheelEvent(simulatedScrollEvent.get(), phase));
         }
+        break;
+    }
+}
+
+#if ENABLE(CONTEXT_MENUS)
+void ViewPlatform::handleLongPress()
+{
+    simulateClick(m_longPressX, m_longPressY, WPE_MODIFIER_POINTER_BUTTON3, 3);
+    m_longPressFired = true;
+}
+#endif // ENABLE(CONTEXT_MENUS)
+
+void ViewPlatform::simulateClick(double x, double y, WPEModifiers modifiers, guint button)
+{
+    // Mouse motion towards the point of the click.
+    {
+        GRefPtr<WPEEvent> simulatedEvent = adoptGRef(wpe_event_pointer_move_new(
+            WPE_EVENT_POINTER_MOVE, m_wpeView.get(), WPE_INPUT_SOURCE_TOUCHSCREEN, 0, static_cast<WPEModifiers>(0), x, y, 0, 0));
+        page().handleMouseEvent(WebKit::NativeWebMouseEvent(simulatedEvent.get()));
+    }
+
+    // Mouse down on the point of the click.
+    {
+        GRefPtr<WPEEvent> simulatedEvent = adoptGRef(wpe_event_pointer_button_new(
+            WPE_EVENT_POINTER_DOWN, m_wpeView.get(), WPE_INPUT_SOURCE_TOUCHSCREEN, 0, modifiers, button, x, y, 1));
+        page().handleMouseEvent(WebKit::NativeWebMouseEvent(simulatedEvent.get()));
+    }
+
+    // Mouse up on the same location.
+    {
+        GRefPtr<WPEEvent> simulatedEvent = adoptGRef(wpe_event_pointer_button_new(
+            WPE_EVENT_POINTER_UP, m_wpeView.get(), WPE_INPUT_SOURCE_TOUCHSCREEN, 0, static_cast<WPEModifiers>(0), button, x, y, 0));
+        page().handleMouseEvent(WebKit::NativeWebMouseEvent(simulatedEvent.get()));
     }
 }
 
