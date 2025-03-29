@@ -90,6 +90,10 @@ private:
 
     gboolean handleEvent(WPEEvent*);
     void handleGesture(WPEEvent*);
+    void simulateClick(double x, double y, WPEModifiers modifiers, guint button);
+#if ENABLE(CONTEXT_MENUS)
+    void handleLongPress();
+#endif
 
     GRefPtr<WPEView> m_wpeView;
     RefPtr<WebKit::AcceleratedBackingStoreDMABuf> m_backingStore;
@@ -100,6 +104,12 @@ private:
 #if ENABLE(FULLSCREEN_API)
     bool m_viewWasAlreadyInFullScreen { false };
 #endif
+#if ENABLE(CONTEXT_MENUS)
+    RunLoop::Timer m_longPressTimeout;
+    bool m_longPressFired;
+    double m_longPressX;
+    double m_longPressY;
+#endif // ENABLE(CONTEXT_MENUS)
 };
 
 } // namespace WKWPE
