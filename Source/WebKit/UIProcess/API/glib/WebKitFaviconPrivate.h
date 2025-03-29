@@ -20,12 +20,7 @@
 #pragma once
 
 #include "APIData.h"
-#include "WebKitFaviconDatabase.h"
-#include <WebCore/LinkIcon.h>
+#include "WebKitFavicon.h"
+#include <wtf/glib/GRefPtr.h>
 
-WebKitFaviconDatabase* webkitFaviconDatabaseCreate();
-void webkitFaviconDatabaseOpen(WebKitFaviconDatabase*, const String& path, bool isEphemeral);
-void webkitFaviconDatabaseClose(WebKitFaviconDatabase*);
-void webkitFaviconDatabaseGetLoadDecisionForIcon(WebKitFaviconDatabase*, const WebCore::LinkIcon&, const String&, bool isEphemeral, Function<void(bool)>&&);
-void webkitFaviconDatabaseSetIconForPageURL(WebKitFaviconDatabase*, const WebCore::LinkIcon&, API::Data&, const String&, bool isEphemeral);
-void webkitFaviconDatabaseGetFaviconInternal(WebKitFaviconDatabase*, const gchar* pageURI, bool isEphemeral, GCancellable*, GAsyncReadyCallback, gpointer);
+WebKitFavicon* webkitFaviconCreate(GRefPtr<GBytes> bytes, int width, int height);

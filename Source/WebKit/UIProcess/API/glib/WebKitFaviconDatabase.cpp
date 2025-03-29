@@ -21,7 +21,10 @@
 #include "WebKitFaviconDatabase.h"
 
 #include "IconDatabase.h"
+#include "WebKitFavicon.h"
+#include "WebKitFaviconPrivate.h"
 #include "WebKitFaviconDatabasePrivate.h"
+#include <WebCore/SkiaUtilities.h>
 #include <WebCore/Image.h>
 #include <WebCore/IntSize.h>
 #include <WebCore/NotImplemented.h>
@@ -36,7 +39,6 @@
 
 #if PLATFORM(GTK)
 #include <WebCore/GdkCairoUtilities.h>
-#include <WebCore/GdkSkiaUtilities.h>
 #include <WebCore/RefPtrCairo.h>
 #endif
 
@@ -122,7 +124,6 @@ void webkitFaviconDatabaseClose(WebKitFaviconDatabase* database)
     database->priv->iconDatabase = nullptr;
 }
 
-#if PLATFORM(GTK)
 void webkitFaviconDatabaseGetLoadDecisionForIcon(WebKitFaviconDatabase* database, const LinkIcon& icon, const String& pageURL, bool isEphemeral, Function<void(bool)>&& completionHandler)
 {
     if (!webkitFaviconDatabaseIsOpen(database)) {
@@ -158,7 +159,6 @@ void webkitFaviconDatabaseSetIconForPageURL(WebKitFaviconDatabase* database, con
             g_signal_emit(database.get(), signals[FAVICON_CHANGED], 0, pageURL.utf8().data(), url.utf8().data());
         });
 }
-#endif
 
 /**
  * webkit_favicon_database_error_quark:
@@ -172,7 +172,6 @@ GQuark webkit_favicon_database_error_quark(void)
     return g_quark_from_static_string("WebKitFaviconDatabaseError");
 }
 
-#if PLATFORM(GTK)
 void webkitFaviconDatabaseGetFaviconInternal(WebKitFaviconDatabase* database, const gchar* pageURI, bool isEphemeral, GCancellable* cancellable, GAsyncReadyCallback callback, gpointer userData)
 {
     if (!webkitFaviconDatabaseIsOpen(database)) {
@@ -247,6 +246,8 @@ void webkit_favicon_database_get_favicon(WebKitFaviconDatabase* database, const 
  */
 #if USE(GTK4)
 GdkTexture* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabase* database, GAsyncResult* result, GError** error)
+#elif PLATFORM(WPE)
+WebKitFavicon* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabase* database, GAsyncResult* result, GError** error)
 #else
 cairo_surface_t* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabase* database, GAsyncResult* result, GError** error)
 #endif
@@ -269,6 +270,11 @@ cairo_surface_t* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabas
     if (error && !*error)
         g_set_error_literal(error, WEBKIT_FAVICON_DATABASE_ERROR, WEBKIT_FAVICON_DATABASE_ERROR_FAVICON_UNKNOWN, _("Failed to create texture"));
     return nullptr;
+#elif PLATFORM(WPE)
+    auto* image = static_cast<SkImage*>(g_task_propagate_pointer(G_TASK(result), error));
+    std::tuple<GRefPtr<GBytes>, int, int> favicon = image ? skiaImageToGBytes(*image) : std::make_tuple(nullptr, -1, -1);
+    GRefPtr<WebKitFavicon> gfavicon = adoptGRef(webkitFaviconCreate(std::get<0>(favicon), std::get<1>(favicon), std::get<2>(favicon)));
+    return gfavicon.leakRef();
 #else
 #if USE(SKIA)
     auto* image = static_cast<SkImage*>(g_task_propagate_pointer(G_TASK(result), error));
@@ -278,7 +284,6 @@ cairo_surface_t* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabas
 #endif
 #endif
 }
-#endif
 
 /**
  * webkit_favicon_database_get_favicon_uri:

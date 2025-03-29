@@ -28,7 +28,7 @@
 
 #include "BitmapImage.h"
 #include "GdkCairoUtilities.h"
-#include "GdkSkiaUtilities.h"
+#include "SkiaUtilities.h"
 #include "SharedBuffer.h"
 #include <cairo.h>
 #include <gdk/gdk.h>
