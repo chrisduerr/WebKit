@@ -27,13 +27,15 @@
 
 #if USE(SKIA)
 
+#if !PLATFORM(WPE)
 #include <gdk/gdk.h>
+#endif
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkImage.h>
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #include <wtf/glib/GRefPtr.h>
 
-#if !USE(GTK4)
+#if !USE(GTK4) && !PLATFORM(WPE)
 #include <cairo.h>
 #endif
 
@@ -41,11 +43,15 @@ namespace WebCore {
 
 #if USE(GTK4)
 GRefPtr<GdkTexture> skiaImageToGdkTexture(SkImage&);
+#elif PLATFORM(WPE)
+std::tuple<GRefPtr<GBytes>, int, int> skiaImageToGBytes(SkImage&);
 #else
 RefPtr<cairo_surface_t> skiaImageToCairoSurface(SkImage&);
 #endif
 
+#if !PLATFORM(WPE)
 GRefPtr<GdkPixbuf> skiaImageToGdkPixbuf(SkImage&);
+#endif
 
 }
 

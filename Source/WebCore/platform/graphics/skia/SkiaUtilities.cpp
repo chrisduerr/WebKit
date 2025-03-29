@@ -24,7 +24,7 @@
  */
 
 #include "config.h"
-#include "GdkSkiaUtilities.h"
+#include "SkiaUtilities.h"
 
 #if USE(SKIA)
 
@@ -52,6 +52,21 @@ GRefPtr<GdkTexture> skiaImageToGdkTexture(SkImage& image)
     return adoptGRef(gdk_memory_texture_new(pixmap.width(), pixmap.height(), GDK_MEMORY_DEFAULT, bytes.get(), pixmap.rowBytes()));
 }
 
+#elif PLATFORM(WPE)
+
+std::tuple<GRefPtr<GBytes>, int, int> skiaImageToGBytes(SkImage& image)
+{
+    SkPixmap pixmap;
+    if (!image.peekPixels(&pixmap))
+        return { };
+
+    GRefPtr<GBytes> bytes = adoptGRef(g_bytes_new_with_free_func(pixmap.addr(), pixmap.computeByteSize(), [](gpointer data) {
+        static_cast<SkImage*>(data)->unref();
+    }, SkRef(&image)));
+
+    return std::make_tuple(bytes, pixmap.width(), pixmap.height());
+}
+
 #else
 
 RefPtr<cairo_surface_t> skiaImageToCairoSurface(SkImage& image)
@@ -73,6 +88,7 @@ RefPtr<cairo_surface_t> skiaImageToCairoSurface(SkImage& image)
 }
 #endif
 
+#if !PLATFORM(WPE)
 GRefPtr<GdkPixbuf> skiaImageToGdkPixbuf(SkImage& image)
 {
 #if USE(GTK4)
@@ -89,6 +105,7 @@ GRefPtr<GdkPixbuf> skiaImageToGdkPixbuf(SkImage& image)
     return adoptGRef(gdk_pixbuf_get_from_surface(surface.get(), 0, 0, cairo_image_surface_get_width(surface.get()), cairo_image_surface_get_height(surface.get())));
 #endif
 }
+#endif
 
 } // namespace WebCore
 
