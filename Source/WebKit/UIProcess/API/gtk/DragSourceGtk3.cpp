@@ -30,7 +30,7 @@
 
 #include "WebKitWebViewBasePrivate.h"
 #include <WebCore/GRefPtrGtk.h>
-#include <WebCore/GdkSkiaUtilities.h>
+#include <WebCore/SkiaUtilities.h>
 #include <WebCore/GtkUtilities.h>
 #include <WebCore/PasteboardCustomData.h>
 #include <gtk/gtk.h>
