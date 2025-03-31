@@ -264,6 +264,7 @@ UIProcess/wpe/WPEUtilities.cpp
 UIProcess/wpe/WebPageProxyWPE.cpp
 UIProcess/wpe/WebPasteboardProxyWPE.cpp
 UIProcess/wpe/WebPreferencesWPE.cpp
+UIProcess/wpe/WebContextMenuProxyWPE.cpp
 
 WebProcess/GPU/graphics/gbm/RemoteGraphicsContextGLProxyGBM.cpp
 
