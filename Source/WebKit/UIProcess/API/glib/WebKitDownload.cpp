@@ -422,6 +422,11 @@ void webkitDownloadFailed(WebKitDownload* download, const ResourceError& resourc
 
 void webkitDownloadCancelled(WebKitDownload* download)
 {
+    // Ignore cancellation for finished downloads.
+    if (!WEBKIT_IS_DOWNLOAD(download)) {
+        return;
+    }
+
     WebKitDownloadPrivate* priv = download->priv;
     webkitDownloadFailed(download, downloadCancelledByUserError(priv->response ? webkitURIResponseGetResourceResponse(priv->response.get()) : ResourceResponse()));
 }
