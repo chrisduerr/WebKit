@@ -44,6 +44,7 @@ public:
 
     std::optional<Position> position() const { return m_position; }
     std::optional<Delta> delta() const { return m_delta; }
+    std::optional<double> zoomDelta() const { return m_zoomDelta; }
     bool dragBegin() const { return m_dragBegin && *m_dragBegin; }
 
 private:
@@ -53,6 +54,9 @@ private:
     std::optional<Position> m_nextDeltaReferencePosition;
     std::optional<Delta> m_delta;
     std::optional<bool> m_dragBegin;
+    std::optional<uint32_t> m_zoomSequenceId;
+    std::optional<Position> m_zoomPosition;
+    std::optional<double> m_zoomDelta;
 };
 
 } // namespace WPE

@@ -25,6 +25,8 @@
 
 #include "config.h"
 #include "WPEWebViewPlatform.h"
+#include <cfloat>
+#include <cmath>
 
 #if ENABLE(WPE_PLATFORM)
 #include "APIPageConfiguration.h"
@@ -420,6 +422,9 @@ void ViewPlatform::handleGesture(WPEEvent* event)
         }
 #endif // ENABLE(CONTEXT_MENU)
 
+        // Clear pending zoom level changes.
+        m_pendingZoom = std::nullopt;
+
         break;
     default:
         break;
@@ -450,6 +455,33 @@ void ViewPlatform::handleGesture(WPEEvent* event)
                                                                           : WebWheelEvent::Phase::PhaseChanged;
             page().handleNativeWheelEvent(WebKit::NativeWebWheelEvent(simulatedScrollEvent.get(), phase));
         }
+        break;
+    case WPE_GESTURE_ZOOM:
+        // Cancel synthetic right-click timer on zoom gesture detection.
+        m_longPressTimeout.stop();
+
+        // Update view's zoom based on scale factor change.
+        if (double delta; wpe_gesture_controller_get_zoom_delta(gestureController, &delta)) {
+            // Ensure pending zoom is initialized.
+            double pageZoomFactor = page().pageZoomFactor();
+            if (!m_pendingZoom) {
+                m_pendingZoom = pageZoomFactor;
+            }
+
+            // Adjust pending zoom by current delta.
+            m_pendingZoom = *m_pendingZoom * delta;
+
+            // Apply pending zoom change if it exceeds minimum step size.
+            if (std::abs(*m_pendingZoom - pageZoomFactor) >= 0.1
+                    && *m_pendingZoom >= 0.1
+                    && *m_pendingZoom < 9.0
+            ) {
+                double rounded = std::round(*m_pendingZoom * 10.0) / 10.0;
+                page().setPageZoomFactor(rounded);
+                m_pendingZoom = std::nullopt;
+            }
+        }
+
         break;
     }
 }
