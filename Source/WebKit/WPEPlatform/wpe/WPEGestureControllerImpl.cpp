@@ -79,6 +79,15 @@ static gboolean wpeIsDragBegin(WPEGestureController* controller)
     return WPE_GESTURE_CONTROLLER_IMPL(controller)->priv->detector.dragBegin();
 }
 
+static gboolean wpeGetGestureZoomDelta(WPEGestureController* controller, double* delta)
+{
+    if (auto zoomDelta = WPE_GESTURE_CONTROLLER_IMPL(controller)->priv->detector.zoomDelta()) {
+        *delta = *zoomDelta;
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void wpe_gesture_controller_impl_class_init(WPEGestureControllerImplClass*)
 {
 }
@@ -91,6 +100,7 @@ static void wpe_gesture_controller_interface_init(WPEGestureControllerInterface*
     interface->get_gesture_position = wpeGetGesturePosition;
     interface->get_gesture_delta = wpeGetGestureDelta;
     interface->is_drag_begin = wpeIsDragBegin;
+    interface->get_gesture_zoom_delta = wpeGetGestureZoomDelta;
 }
 
 WPEGestureController* wpeGestureControllerImplNew()
