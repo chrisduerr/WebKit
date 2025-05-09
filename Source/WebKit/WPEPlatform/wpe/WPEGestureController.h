@@ -40,12 +40,14 @@ G_BEGIN_DECLS
  * @WPE_GESTURE_NONE: no gesture.
  * @WPE_GESTURE_TAP: tap gesture that has a corresponding position.
  * @WPE_GESTURE_DRAG: drag gesture that has a corresponding position and delta.
+ * @WPE_GESTURE_ZOOM: two finger zoom gesture.
  */
 typedef enum {
     WPE_GESTURE_NONE,
 
     WPE_GESTURE_TAP,
     WPE_GESTURE_DRAG,
+    WPE_GESTURE_ZOOM,
 } WPEGesture;
 
 typedef struct _WPEEvent WPEEvent;
@@ -68,6 +70,8 @@ struct _WPEGestureControllerInterface
                                           double               *x,
                                           double               *y);
     gboolean    (* is_drag_begin)        (WPEGestureController *controller);
+    gboolean    (* get_gesture_zoom_delta)  (WPEGestureController *controller,
+                                             double               *delta);
 };
 
 WPE_API gboolean    wpe_gesture_controller_handle_event         (WPEGestureController *controller,
@@ -81,6 +85,8 @@ WPE_API gboolean    wpe_gesture_controller_get_gesture_delta    (WPEGestureContr
                                                                  double               *x,
                                                                  double               *y);
 WPE_API gboolean    wpe_gesture_controller_is_drag_begin        (WPEGestureController *controller);
+WPE_API gboolean    wpe_gesture_controller_get_zoom_delta       (WPEGestureController *controller,
+                                                                 double               *delta);
 
 G_END_DECLS
 
