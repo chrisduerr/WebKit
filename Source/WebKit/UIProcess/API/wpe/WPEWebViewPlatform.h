@@ -110,6 +110,7 @@ private:
     double m_longPressX;
     double m_longPressY;
 #endif // ENABLE(CONTEXT_MENUS)
+    std::optional<double> m_pendingZoom;
 };
 
 } // namespace WKWPE
