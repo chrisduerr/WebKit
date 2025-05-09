@@ -145,3 +145,23 @@ gboolean wpe_gesture_controller_is_drag_begin(WPEGestureController* controller)
     auto* controllerInterface = WPE_GESTURE_CONTROLLER_GET_IFACE(controller);
     return controllerInterface->is_drag_begin(controller);
 }
+
+/**
+ * wpe_gesture_controller_get_zoom_delta:
+ * @controller: a #WPEGestureController
+ * @delta: (out): location to store target zoom delta
+ *
+ * Get the target WebView zoom delta.
+ * If it doesn't have a zoom delta, %FALSE is returned.
+ *
+ * Returns: %TRUE if zoom delta is returned in @delta,
+ *    or %FALSE if currently detected gesture doesn't have a zoom delta
+ */
+gboolean wpe_gesture_controller_get_zoom_delta(WPEGestureController* controller, double* delta)
+{
+    g_return_val_if_fail(controller, FALSE);
+    g_return_val_if_fail(delta, FALSE);
+
+    auto* controllerInterface = WPE_GESTURE_CONTROLLER_GET_IFACE(controller);
+    return controllerInterface->get_gesture_zoom_delta(controller, delta);
+}
