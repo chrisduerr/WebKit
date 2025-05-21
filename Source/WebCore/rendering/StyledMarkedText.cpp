@@ -27,6 +27,7 @@
 #include "StyledMarkedText.h"
 
 #include "ColorBlending.h"
+#include "ColorSpace.h"
 #include "ElementRuleCollector.h"
 #include "RenderElement.h"
 #include "RenderStyleInlines.h"
@@ -84,8 +85,7 @@ static StyledMarkedText resolveStyleForMarkedText(const MarkedText& markedText, 
         break;
     }
     case MarkedText::Type::Highlight: {
-        auto renderStyle = renderer.parent()->getUncachedPseudoStyle({ PseudoId::Highlight, markedText.highlightName }, &renderer.style());
-        computeStyleForPseudoElementStyle(style, renderStyle.get(), paintInfo);
+        style.backgroundColor = SRGBA<uint8_t> { 0, 255, 255 };
         break;
     }
     case MarkedText::Type::SpellingError: {
@@ -105,8 +105,7 @@ static StyledMarkedText resolveStyleForMarkedText(const MarkedText& markedText, 
     }
 #if ENABLE(APP_HIGHLIGHTS)
     case MarkedText::Type::AppHighlight: {
-        OptionSet<StyleColorOptions> styleColorOptions = { StyleColorOptions::UseSystemAppearance };
-        style.backgroundColor = renderer.theme().annotationHighlightColor(styleColorOptions);
+        style.backgroundColor = SRGBA<uint8_t> { 255, 255, 0 };
         break;
     }
 #endif
@@ -116,22 +115,22 @@ static StyledMarkedText resolveStyleForMarkedText(const MarkedText& markedText, 
     case MarkedText::Type::TransparentContent:
         style.alpha = 0.0;
         break;
-    case MarkedText::Type::Selection: {
-        style.textStyles = computeTextSelectionPaintStyle(style.textStyles, renderer, lineStyle, paintInfo, style.textShadow);
-
-        Color selectionBackgroundColor = renderer.selectionBackgroundColor();
-        style.backgroundColor = selectionBackgroundColor;
-        if (selectionBackgroundColor.isValid() && selectionBackgroundColor.isVisible() && style.textStyles.fillColor == selectionBackgroundColor)
-            style.backgroundColor = selectionBackgroundColor.invertedColorWithAlpha(1.0);
-        break;
-    }
     case MarkedText::Type::TextMatch: {
         // Text matches always use the light system appearance.
         OptionSet<StyleColorOptions> styleColorOptions = { StyleColorOptions::UseSystemAppearance };
 #if PLATFORM(MAC)
         style.textStyles.fillColor = renderer.theme().systemColor(CSSValueAppleSystemLabel, styleColorOptions);
 #endif
-        style.backgroundColor = renderer.theme().textSearchHighlightColor(styleColorOptions);
+        style.backgroundColor = SRGBA<uint8_t> { 255, 0, 255 };
+        break;
+    }
+    case MarkedText::Type::Selection: {
+        style.textStyles = computeTextSelectionPaintStyle(style.textStyles, renderer, lineStyle, paintInfo, style.textShadow);
+
+        Color selectionBackgroundColor = renderer.selectionBackgroundColor();
+        style.backgroundColor = SRGBA<uint8_t> { 0, 255, 0 };
+        if (selectionBackgroundColor.isValid() && selectionBackgroundColor.isVisible() && style.textStyles.fillColor == selectionBackgroundColor)
+            style.backgroundColor = selectionBackgroundColor.invertedColorWithAlpha(1.0);
         break;
     }
     }
