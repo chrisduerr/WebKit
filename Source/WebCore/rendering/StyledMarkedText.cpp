@@ -27,6 +27,7 @@
 #include "StyledMarkedText.h"
 
 #include "ColorBlending.h"
+#include "ColorSpace.h"
 #include "ElementRuleCollector.h"
 #include "RenderElement.h"
 #include "RenderStyleInlines.h"
@@ -117,21 +118,13 @@ static StyledMarkedText resolveStyleForMarkedText(const MarkedText& markedText, 
         style.alpha = 0.0;
         break;
     case MarkedText::Type::Selection: {
-        style.textStyles = computeTextSelectionPaintStyle(style.textStyles, renderer, lineStyle, paintInfo, style.textShadow);
-
-        Color selectionBackgroundColor = renderer.selectionBackgroundColor();
-        style.backgroundColor = selectionBackgroundColor;
-        if (selectionBackgroundColor.isValid() && selectionBackgroundColor.isVisible() && style.textStyles.fillColor == selectionBackgroundColor)
-            style.backgroundColor = selectionBackgroundColor.invertedColorWithAlpha(1.0);
+        // NOTE: Selection does not work with touch input right now, so we just use this
+        // with a fixed value for the active search highlight.
+        style.backgroundColor = SRGBA<uint8_t> { 0, 255, 0 };
         break;
     }
     case MarkedText::Type::TextMatch: {
-        // Text matches always use the light system appearance.
-        OptionSet<StyleColorOptions> styleColorOptions = { StyleColorOptions::UseSystemAppearance };
-#if PLATFORM(MAC)
-        style.textStyles.fillColor = renderer.theme().systemColor(CSSValueAppleSystemLabel, styleColorOptions);
-#endif
-        style.backgroundColor = renderer.theme().textSearchHighlightColor(styleColorOptions);
+        style.backgroundColor = SRGBA<uint8_t> { 255, 0, 255 };
         break;
     }
     }
