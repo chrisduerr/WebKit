@@ -39,6 +39,7 @@
 #include "GRefPtrWPE.h"
 #include "WPEUtilities.h"
 #include <wpe/wpe-platform.h>
+#include <wtf/glib/GUniquePtr.h>
 #endif
 
 namespace WebKit {
