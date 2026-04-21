@@ -36,6 +36,11 @@ WebContextMenuProxyWPE::WebContextMenuProxyWPE(WebPageProxy& page, FrameInfoData
 {
 }
 
+void WebContextMenuProxyWPE::show()
+{
+    WebContextMenuProxy::show();
+}
+
 void WebContextMenuProxyWPE::showContextMenuWithItems(Vector<Ref<WebContextMenuItem>>&& items)
 {
     notImplemented();
