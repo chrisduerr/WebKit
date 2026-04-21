@@ -41,6 +41,7 @@ public:
 private:
     WebContextMenuProxyWPE(WebPageProxy&, FrameInfoData&&, ContextMenuContextData&&, const UserData&);
     void showContextMenuWithItems(Vector<Ref<WebContextMenuItem>>&&) override;
+    void show() override;
 };
 
 } // namespace WebKit
