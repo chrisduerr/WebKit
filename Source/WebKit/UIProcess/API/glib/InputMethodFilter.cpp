@@ -279,7 +279,9 @@ void InputMethodFilter::preeditChanged()
     webkit_input_method_context_get_preedit(m_context.get(), &newPreedit.outPtr(), &underlines, &cursorOffset);
 
     if (m_preedit.text.utf8() == newPreedit.get()) {
-        g_list_free_full(underlines, reinterpret_cast<GDestroyNotify>(webkit_input_method_underline_free));
+        if (underlines) {
+            g_list_free_full(underlines, reinterpret_cast<GDestroyNotify>(webkit_input_method_underline_free));
+        }
         return;
     }
 
