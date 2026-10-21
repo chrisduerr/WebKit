@@ -29,7 +29,8 @@ void webkitFaviconDatabaseClose(WebKitFaviconDatabase*);
 #if PLATFORM(GTK) || ENABLE(2022_GLIB_API)
 void webkitFaviconDatabaseGetLoadDecisionForIcon(WebKitFaviconDatabase*, const WebCore::LinkIcon&, const String&, bool isEphemeral, Function<void(bool)>&&);
 void webkitFaviconDatabaseSetIconForPageURL(WebKitFaviconDatabase*, const WebCore::LinkIcon&, API::Data&, const String&, bool isEphemeral);
-#endif
-#if PLATFORM(GTK)
 void webkitFaviconDatabaseGetFaviconInternal(WebKitFaviconDatabase*, const gchar* pageURI, bool isEphemeral, GCancellable*, GAsyncReadyCallback, gpointer);
+#if PLATFORM(WPE)
+std::tuple<GRefPtr<GBytes>, int, int> skiaImageToGBytes(SkImage& image);
+#endif
 #endif

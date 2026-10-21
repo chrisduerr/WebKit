@@ -116,6 +116,9 @@
 #if PLATFORM(GTK) || ENABLE(2022_GLIB_API)
 #include "WebKitFaviconDatabasePrivate.h"
 #endif
+#if PLATFORM(WPE)
+#include "WebKitFaviconPrivate.h"
+#endif
 
 #if PLATFORM(WPE)
 #include "WPEUtilities.h"
@@ -234,9 +237,7 @@ enum {
     PROP_TITLE,
     PROP_ESTIMATED_LOAD_PROGRESS,
 
-#if PLATFORM(GTK)
     PROP_FAVICON,
-#endif
 
     PROP_URI,
     PROP_ZOOM_LEVEL,
@@ -425,9 +426,12 @@ struct _WebKitWebViewPrivate {
 #endif
 
     GRefPtr<WebKitWebInspector> inspector;
+#endif
 
 #if USE(GTK4)
     GRefPtr<GdkTexture> favicon;
+#elif PLATFORM(WPE)
+    GRefPtr<WebKitFavicon> favicon;
 #else
     RefPtr<cairo_surface_t> favicon;
 #endif
@@ -435,7 +439,6 @@ struct _WebKitWebViewPrivate {
 
     CString faviconURI;
     unsigned long faviconChangedHandlerID;
-#endif
 
 #if ENABLE(2022_GLIB_API)
     GRefPtr<WebKitImageList> pageIcons;
@@ -722,9 +725,12 @@ static void enableBackForwardNavigationGesturesChanged(WebKitSettings* settings,
     gboolean enable = webkit_settings_get_enable_back_forward_navigation_gestures(settings);
     webkitWebViewBaseSetEnableBackForwardNavigationGesture(WEBKIT_WEB_VIEW_BASE(webView), enable);
 }
+#endif
 
 #if USE(GTK4)
 static void webkitWebViewUpdateFavicon(WebKitWebView* webView, GdkTexture* favicon)
+#elif PLATFORM(WPE)
+static void webkitWebViewUpdateFavicon(WebKitWebView* webView, WebKitFavicon* favicon)
 #else
 static void webkitWebViewUpdateFavicon(WebKitWebView* webView, cairo_surface_t* favicon)
 #endif
@@ -751,6 +757,8 @@ static void gotFaviconCallback(GObject* object, GAsyncResult* result, gpointer u
     GUniqueOutPtr<GError> error;
 #if USE(GTK4)
     GRefPtr<GdkTexture> favicon = adoptGRef(webkit_favicon_database_get_favicon_finish(WEBKIT_FAVICON_DATABASE(object), result, &error.outPtr()));
+#elif PLATFORM(WPE)
+    GRefPtr<WebKitFavicon> favicon = adoptGRef(webkit_favicon_database_get_favicon_finish(WEBKIT_FAVICON_DATABASE(object), result, &error.outPtr()));
 #else
     RefPtr<cairo_surface_t> favicon = adoptRef(webkit_favicon_database_get_favicon_finish(WEBKIT_FAVICON_DATABASE(object), result, &error.outPtr()));
 #endif
@@ -791,7 +799,6 @@ static void faviconChangedCallback(WebKitFaviconDatabase*, const char* pageURI, 
 
     webkitWebViewUpdateFaviconURI(webView, faviconURI);
 }
-#endif // PLATFORM(GTK)
 
 #if ENABLE(2022_GLIB_API)
 static void webkitWebViewUpdatePageIcons(WebKitWebView* webView, GRefPtr<WebKitImageList>&& pageIcons)
@@ -851,7 +858,6 @@ static void webkitWebViewDisconnectSettingsSignalHandlers(WebKitWebView* webView
 #endif
 }
 
-#if PLATFORM(GTK)
 static void webkitWebViewWatchForChangesInFavicon(WebKitWebView* webView)
 {
     WebKitWebViewPrivate* priv = webView->priv;
@@ -864,7 +870,6 @@ static void webkitWebViewWatchForChangesInFavicon(WebKitWebView* webView)
 
     priv->faviconChangedHandlerID = g_signal_connect_object(database, "favicon-changed", G_CALLBACK(faviconChangedCallback), webView, static_cast<GConnectFlags>(0));
 }
-#endif
 
 static Ref<API::PageConfiguration> webkitWebViewCreatePageConfiguration(WebKitWebView* webView)
 {
@@ -1192,15 +1197,13 @@ static void webkitWebViewGetProperty(GObject* object, guint propId, GValue* valu
     case PROP_ESTIMATED_LOAD_PROGRESS:
         g_value_set_double(value, webkit_web_view_get_estimated_load_progress(webView));
         break;
-#if PLATFORM(GTK)
     case PROP_FAVICON:
-#if USE(GTK4)
+#if USE(GTK4) || PLATFORM(WPE)
         g_value_set_object(value, webkit_web_view_get_favicon(webView));
 #else
         g_value_set_pointer(value, webkit_web_view_get_favicon(webView));
 #endif
         break;
-#endif
     case PROP_URI:
         g_value_set_string(value, webkit_web_view_get_uri(webView));
         break;
@@ -1286,10 +1289,8 @@ static void webkitWebViewDispose(GObject* object)
 {
     WebKitWebView* webView = WEBKIT_WEB_VIEW(object);
 
-#if PLATFORM(GTK)
     webkitWebViewCancelFaviconRequest(webView);
     webView->priv->faviconChangedHandlerID = 0;
-#endif
 
     webkitWebViewDisconnectSettingsSignalHandlers(webView);
 
@@ -1476,7 +1477,6 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
             0.0, 1.0, 0.0,
             WEBKIT_PARAM_READABLE);
 
-#if PLATFORM(GTK)
     sObjProperties[PROP_FAVICON] =
 #if USE(GTK4)
         g_param_spec_object(
@@ -1490,7 +1490,6 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
             nullptr, nullptr,
             WEBKIT_PARAM_READABLE);
 #endif
-#endif // PLATFORM(GTK)
 
 #if ENABLE(2022_GLIB_API)
     /**
@@ -2736,10 +2735,8 @@ void webkitWebViewLoadChanged(WebKitWebView* webView, WebKitLoadEvent loadEvent)
     WebKitWebViewPrivate* priv = webView->priv;
     switch (loadEvent) {
     case WEBKIT_LOAD_STARTED:
-#if PLATFORM(GTK)
         webkitWebViewCancelFaviconRequest(webView);
         webkitWebViewWatchForChangesInFavicon(webView);
-#endif
         webkitWebViewCompleteAuthenticationRequest(webView);
         priv->mainResource = nullptr;
         webView->priv->isActiveURIChangeBlocked = false;
@@ -2753,12 +2750,10 @@ void webkitWebViewLoadChanged(WebKitWebView* webView, WebKitLoadEvent loadEvent)
             priv->activeURI = activeURL;
             g_object_notify_by_pspec(G_OBJECT(webView), sObjProperties[PROP_URI]);
         }
-#if PLATFORM(GTK)
         if (auto* database = webkitWebViewGetFaviconDatabase(webView)) {
             GUniquePtr<char> faviconURI(webkit_favicon_database_get_favicon_uri(database, priv->activeURI.data()));
             webkitWebViewUpdateFaviconURI(webView, faviconURI.get());
         }
-#endif
         break;
     }
     case WEBKIT_LOAD_FINISHED:
@@ -3980,9 +3975,23 @@ const gchar* webkit_web_view_get_uri(WebKitWebView* webView)
     return webView->priv->activeURI.data();
 }
 
-#if PLATFORM(GTK)
+/**
+ * webkit_web_view_get_favicon:
+ * @web_view: a #WebKitWebView
+ *
+ * Returns favicon currently associated to @web_view.
+ *
+ * Returns favicon currently associated to @web_view, if any. You can
+ * connect to notify::favicon signal of @web_view to be notified when
+ * the favicon is available.
+ *
+ * Returns: (transfer none): the favicon image or %NULL if there's no
+ *    icon associated with @web_view.
+ */
 #if USE(GTK4)
 GdkTexture* webkit_web_view_get_favicon(WebKitWebView* webView)
+#elif PLATFORM(WPE)
+WebKitFavicon* webkit_web_view_get_favicon(WebKitWebView* webView)
 #else
 cairo_surface_t* webkit_web_view_get_favicon(WebKitWebView* webView)
 #endif
@@ -3993,7 +4002,6 @@ cairo_surface_t* webkit_web_view_get_favicon(WebKitWebView* webView)
 
     return webView->priv->favicon.get();
 }
-#endif
 
 /**
  * webkit_web_view_get_custom_charset:

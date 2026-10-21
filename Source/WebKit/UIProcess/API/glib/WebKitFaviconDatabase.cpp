@@ -21,12 +21,15 @@
 #include "WebKitFaviconDatabase.h"
 
 #include "IconDatabase.h"
+#include "WebKitFavicon.h"
+#include "WebKitFaviconPrivate.h"
 #include "WebKitFaviconDatabasePrivate.h"
 #include <WebCore/Image.h>
 #include <WebCore/IntSize.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/SharedBuffer.h>
 #include <glib/gi18n-lib.h>
+#include <skia/core/SkPixmap.h>
 #include <wtf/FileSystem.h>
 #include <wtf/RunLoop.h>
 #include <wtf/glib/GRefPtr.h>
@@ -183,7 +186,6 @@ GQuark webkit_favicon_database_error_quark(void)
     return g_quark_from_static_string("WebKitFaviconDatabaseError");
 }
 
-#if PLATFORM(GTK)
 void webkitFaviconDatabaseGetFaviconInternal(WebKitFaviconDatabase* database, const gchar* pageURI, bool isEphemeral, GCancellable* cancellable, GAsyncReadyCallback callback, gpointer userData)
 {
     if (!webkitFaviconDatabaseIsOpen(database)) {
@@ -224,6 +226,8 @@ void webkit_favicon_database_get_favicon(WebKitFaviconDatabase* database, const 
 
 #if USE(GTK4)
 GdkTexture* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabase* database, GAsyncResult* result, GError** error)
+#elif PLATFORM(WPE)
+WebKitFavicon* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabase* database, GAsyncResult* result, GError** error)
 #else
 cairo_surface_t* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabase* database, GAsyncResult* result, GError** error)
 #endif
@@ -241,11 +245,29 @@ cairo_surface_t* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabas
     if (error && !*error)
         g_set_error_literal(error, WEBKIT_FAVICON_DATABASE_ERROR, WEBKIT_FAVICON_DATABASE_ERROR_FAVICON_UNKNOWN, _("Failed to create texture"));
     return nullptr;
+#elif PLATFORM(WPE)
+    auto* image = static_cast<SkImage*>(g_task_propagate_pointer(G_TASK(result), error));
+    std::tuple<GRefPtr<GBytes>, int, int> favicon = image ? skiaImageToGBytes(*image) : std::make_tuple(nullptr, -1, -1);
+    GRefPtr<WebKitFavicon> gfavicon = adoptGRef(webkitFaviconCreate(std::get<0>(favicon), std::get<1>(favicon), std::get<2>(favicon)));
+    return gfavicon.leakRef();
 #else
     sk_sp image { static_cast<SkImage*>(g_task_propagate_pointer(G_TASK(result), error)) };
     return image ? skiaImageToCairoSurface(*image).leakRef() : nullptr;
 #endif
 }
+
+#if PLATFORM(WPE)
+std::tuple<GRefPtr<GBytes>, int, int> skiaImageToGBytes(SkImage& image)
+{
+    SkPixmap pixmap;
+    if (!image.peekPixels(&pixmap))
+        return { };
+    GRefPtr<GBytes> bytes = adoptGRef(g_bytes_new_with_free_func(pixmap.addr(), pixmap.computeByteSize(), [](gpointer data) {
+        static_cast<SkImage*>(data)->unref();
+    }, SkRef(&image)));
+    return std::make_tuple(bytes, pixmap.width(), pixmap.height());
+}
+#endif
 
 gchar* webkit_favicon_database_get_favicon_uri(WebKitFaviconDatabase* database, const gchar* pageURL)
 {
@@ -262,7 +284,6 @@ gchar* webkit_favicon_database_get_favicon_uri(WebKitFaviconDatabase* database, 
 
     return g_strdup(iconURLsForPageURL.last().utf8().data());
 }
-#endif // PLATFORM(GTK)
 
 #if ENABLE(2022_GLIB_API)
 /**

@@ -32,6 +32,8 @@
 #else
 #include <cairo.h>
 #endif
+#else
+#include <@API_INCLUDE_PREFIX@/WebKitFavicon.h>
 #endif
 
 #if ENABLE(2022_GLIB_API)
@@ -79,7 +81,6 @@ typedef enum {
 WEBKIT_API GQuark
 webkit_favicon_database_error_quark        (void);
 
-#if PLATFORM(GTK)
 WEBKIT_API void
 webkit_favicon_database_get_favicon        (WebKitFaviconDatabase *database,
                                             const gchar           *page_uri,
@@ -89,6 +90,11 @@ webkit_favicon_database_get_favicon        (WebKitFaviconDatabase *database,
 
 #if USE(GTK4)
 WEBKIT_API GdkTexture *
+webkit_favicon_database_get_favicon_finish (WebKitFaviconDatabase *database,
+                                            GAsyncResult          *result,
+                                            GError               **error);
+#elif PLATFORM(WPE)
+WEBKIT_API WebKitFavicon *
 webkit_favicon_database_get_favicon_finish (WebKitFaviconDatabase *database,
                                             GAsyncResult          *result,
                                             GError               **error);
@@ -102,7 +108,6 @@ webkit_favicon_database_get_favicon_finish (WebKitFaviconDatabase *database,
 WEBKIT_API gchar *
 webkit_favicon_database_get_favicon_uri    (WebKitFaviconDatabase *database,
                                             const gchar           *page_uri);
-#endif // PLATFORM(GTK)
 
 #if ENABLE(2022_GLIB_API)
 WEBKIT_API void

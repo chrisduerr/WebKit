@@ -146,6 +146,7 @@ UIProcess/API/glib/WebKitDownload.cpp @no-unify
 UIProcess/API/glib/WebKitDownloadClient.cpp @no-unify
 UIProcess/API/glib/WebKitEditorState.cpp @no-unify
 UIProcess/API/glib/WebKitError.cpp @no-unify
+UIProcess/API/glib/WebKitFavicon.cpp @no-unify
 UIProcess/API/glib/WebKitFaviconDatabase.cpp @no-unify
 UIProcess/API/glib/WebKitFeature.cpp @no-unify
 UIProcess/API/glib/WebKitFileChooserRequest.cpp @no-unify
@@ -154,6 +155,7 @@ UIProcess/API/glib/WebKitFormClient.cpp @no-unify
 UIProcess/API/glib/WebKitFormSubmissionRequest.cpp @no-unify
 UIProcess/API/glib/WebKitGeolocationManager.cpp @no-unify
 UIProcess/API/glib/WebKitGeolocationPermissionRequest.cpp @no-unify
+UIProcess/API/glib/WebKitIconLoadingClient.cpp @no-unify
 UIProcess/API/glib/WebKitImage.cpp @no-unify
 UIProcess/API/glib/WebKitInitialize.cpp @no-unify
 UIProcess/API/glib/WebKitInjectedBundleClient.cpp @no-unify
